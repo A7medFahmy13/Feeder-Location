@@ -14,11 +14,15 @@ from lxml import etree
 def load_stored_points():
     csv_file_path = "Split_Coordinates_Data.csv"  # اسم ملف النقاط المخزن داخل البرنامج
     df = pd.read_csv(csv_file_path)
+    df["lat"] = df["latitude"]
+    df["long"] = df["longitude"]
     points = [Point(lon, lat) for lon, lat in zip(df["longitude"], df["latitude"])]
     return {
         "points": points,
         "names": df["name"].tolist(),
-        "descriptions": df["description"].tolist()
+        "descriptions": df["description"].tolist(),
+        "latitudes": df["lat"].tolist(),
+        "longitudes": df["long"].tolist()
     }
 
 # ✅ تحميل بيانات المناطق من ملف CSV
@@ -94,6 +98,8 @@ def main():
             points_gdf = gpd.GeoDataFrame({
                 "اسم النقطة": st.session_state.points_data["names"],
                 "الوصف": st.session_state.points_data["descriptions"],
+                "latitude": st.session_state.points_data["latitudes"],
+                "longitude": st.session_state.points_data["longitudes"],
                 "geometry": st.session_state.points_data["points"]
             }, crs="EPSG:4326")
 
@@ -108,8 +114,9 @@ def main():
             
             folium.GeoJson(selected_polygon, name=selected_zone).add_to(m)
             for _, row in points_inside.iterrows():
+                location_url = f"https://www.google.com/maps?q={row['latitude']},{row['longitude']}"
                 folium.Marker([row.geometry.y, row.geometry.x],
-                              popup=row["اسم النقطة"],
+                              popup=f'<a href="{location_url}" target="_blank">انتقل إلى النقطة</a>',
                               icon=folium.Icon(color="blue")).add_to(m)
             folium_static(m)
     else:
@@ -119,7 +126,7 @@ def main():
         <div style='text-align: center; font-size: 18px; color: gray;'>
             🎗️ **إهداء إلى الأخ العزيز المهندس موسى السعيد** 🎗️
         </div>
-    """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
