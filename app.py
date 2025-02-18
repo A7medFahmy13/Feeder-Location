@@ -50,14 +50,14 @@ def main():
     
     if not st.session_state.start_app:
         st.markdown("""
-            <div style='text-align: center;'>
-                <img src='https://upload.wikimedia.org/wikipedia/commons/e/ec/World_map_blank_without_borders.svg' width='400'>
-            </div>
             <div style='text-align: center; font-size: 20px; margin-top: 20px;'>
                 🗺️ **مرحبًا بك في Aseer Monitoring Map** 🗺️
             </div>
             <div style='text-align: center; font-size: 16px; margin-top: 10px;'>
                 هذا التطبيق يتيح لك تحليل ومراقبة المواقع الجغرافية داخل منطقة عسير باستخدام البيانات الجغرافية.
+            </div>
+            <div style='text-align: center; font-size: 18px; color: gray;'>
+                🎗️ **إهداء إلى الأخ العزيز المهندس موسى السعيد** 🎗️
             </div>
         """, unsafe_allow_html=True)
         
@@ -113,6 +113,15 @@ def main():
             points_inside = points_gdf[points_gdf.geometry.within(selected_polygon)]
             st.success(f"✅ تم العثور على {len(points_inside)} نقطة داخل المنطقة {selected_zone}!")
             st.dataframe(points_inside.drop(columns=["geometry"]))
+            
+            # إعادة الخريطة التفاعلية
+            m = folium.Map(location=[selected_polygon.centroid.y, selected_polygon.centroid.x], zoom_start=10)
+            folium.GeoJson(selected_polygon, name=selected_zone).add_to(m)
+            for _, row in points_inside.iterrows():
+                folium.Marker([row["latitude"], row["longitude"]],
+                              popup=row["اسم النقطة"],
+                              icon=folium.Icon(color="blue")).add_to(m)
+            folium_static(m)
     else:
         st.warning("❗ لم يتم العثور على مناطق مخزنة.")
 
