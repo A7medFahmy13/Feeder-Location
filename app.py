@@ -77,6 +77,7 @@ def main():
     
     # تعريف الفلاتر وشجرة الفلترة
     filter_options = {
+        "zone": [],
         "office": ["zone"],
         "contractor": ["zone"],
         "consultant": ["zone"],
@@ -93,41 +94,41 @@ def main():
         if selected_value != "اختر...":
             df_zones = df_zones[df_zones[selected_filter].astype(str) == selected_value]
             
-            # التعامل مع الفلتر التالي وفقًا لشجرة الفلترة
-            if "zone" in df_zones.columns:
-                zone_list = sorted(df_zones["zone"].dropna().astype(str).unique().tolist())
-                selected_zone = st.selectbox("🔍 اختر zone", ["اختر..."] + zone_list)
+            for next_filter in filter_options[selected_filter]:
+                next_list = sorted(df_zones[next_filter].dropna().astype(str).unique().tolist())
+                selected_next_value = st.selectbox(f"🔍 اختر {next_filter}", ["اختر..."] + next_list)
                 
-                if selected_zone != "اختر...":
-                    df_zones = df_zones[df_zones["zone"].astype(str) == selected_zone]
+                if selected_next_value != "اختر...":
+                    df_zones = df_zones[df_zones[next_filter].astype(str) == selected_next_value]
+            
+            st.subheader("📊 تفاصيل المنطقة")
+            st.dataframe(df_zones.drop(columns=["geometry", "wkt"], errors='ignore'))
+            
+            if "zone" in df_zones.columns:
+                selected_polygon = df_zones.iloc[0]["geometry"]
+                df_points_inside = df_points[df_points["geometry"].apply(lambda point: selected_polygon.contains(point))]
+                
+                if not df_points_inside.empty:
+                    st.subheader(f"📍 النقاط داخل المنطقة ({len(df_points_inside)})")
+                    st.dataframe(df_points_inside)
                     
-                    st.subheader("📊 تفاصيل المنطقة")
-                    st.dataframe(df_zones.drop(columns=["geometry", "wkt"], errors='ignore'))
+                    # عرض الخريطة التفاعلية
+                    m = folium.Map(location=[selected_polygon.centroid.y, selected_polygon.centroid.x], zoom_start=12)
+                    folium.GeoJson(selected_polygon, name="المنطقة المحددة").add_to(m)
                     
-                    selected_polygon = df_zones.iloc[0]["geometry"]
-                    df_points_inside = df_points[df_points["geometry"].apply(lambda point: selected_polygon.contains(point))]
+                    for _, row in df_points_inside.iterrows():
+                        location_url = f"https://www.google.com/maps?q={row['lat']},{row['long']}"
+                        popup_content = f"""
+                        <b>الاسم:</b> {row['name']}<br>
+                        <b>الوصف:</b> {row['description']}<br>
+                        <a href='{location_url}' target='_blank'>🔗 الذهاب إلى الموقع</a>
+                        """
+                        folium.Marker(
+                            location=[row["lat"], row["long"]],
+                            popup=folium.Popup(popup_content, max_width=300)
+                        ).add_to(m)
                     
-                    if not df_points_inside.empty:
-                        st.subheader(f"📍 النقاط داخل المنطقة ({len(df_points_inside)})")
-                        st.dataframe(df_points_inside)
-                        
-                        # عرض الخريطة التفاعلية
-                        m = folium.Map(location=[selected_polygon.centroid.y, selected_polygon.centroid.x], zoom_start=12)
-                        folium.GeoJson(selected_polygon, name="المنطقة المحددة").add_to(m)
-                        
-                        for _, row in df_points_inside.iterrows():
-                            location_url = f"https://www.google.com/maps?q={row['lat']},{row['long']}"
-                            popup_content = f"""
-                            <b>الاسم:</b> {row['name']}<br>
-                            <b>الوصف:</b> {row['description']}<br>
-                            <a href='{location_url}' target='_blank'>🔗 الذهاب إلى الموقع</a>
-                            """
-                            folium.Marker(
-                                location=[row["lat"], row["long"]],
-                                popup=folium.Popup(popup_content, max_width=300)
-                            ).add_to(m)
-                        
-                        folium_static(m)
+                    folium_static(m)
     
 if __name__ == "__main__":
     main()
