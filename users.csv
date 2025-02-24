@@ -1,0 +1,166 @@
+username,password,role,linked_name
+admin,1234,admin,admin
+mousa,151087,contractor,ãÍãÏ ÚÈÏÇáæåÇÈ
+user1,1234,Supervisor,ÚÈÏÇáÑÍãä ÍÓä
+user2,1234,Supervisor,åÇäí ÙÇİÑ
+user3,1234,Supervisor,ÚÈÏÇáÛäí ÇáÔåÑí
+user4,1234,Supervisor,ÓÚíÏ ÇáŞÑäí
+user5,1234,Supervisor,Úáí ÇáÑÈÚí
+user6,1234,Supervisor,ÚÇãÑ ãÖæÇÍ
+user7,1234,Supervisor,ãäÇÍí ãŞÚÏ
+user8,1234,Supervisor,ÓÚæÏ ÇáÇÍãÑí
+user9,1234,Supervisor,ÚÈÏÇáÑÍãä ÇáÚáíÇä
+user10,1234,Supervisor,ÚÈÏÇááå åíİ
+user11,1234,Supervisor,ÓÇáã ÇáÑÈíÚí
+user12,1234,Supervisor,ÓáØÇä ãÛÑã
+user13,1234,Supervisor,ÚÇÆÖ ÍÓíä
+user14,1234,Supervisor,äÇíİ ÇáŞÍØÇäí
+user15,1234,Supervisor,ãİÑÍ íÍíì
+user16,1234,Supervisor,ÒíÇÏ ÚÓíÑí
+user17,1234,Supervisor,ÚÈÏÇááå ãÍãÏ
+user18,1234,Supervisor,ŞÈáÇä ãåÏí
+user19,1234,Supervisor,Úáí Çá äÇÔØ
+user20,1234,Supervisor,ãÓÊæÑ İÇáÍ
+user21,1234,Supervisor,ÚÈÏÇáÚÒíÒ ÕÇáÍ
+user22,1234,Supervisor,ÕÇáÍ ÚÕãÇä
+user23,1234,Supervisor,ÚæÖ ÓÚíÏ
+user24,1234,Supervisor,İåÏ ÇáÚáíÇäí
+user25,1234,Supervisor,ÚÈÏÇáÚÒíÒ ÚÊíŞ
+user26,1234,Supervisor,ØÇãí ãÍãÏ
+user27,1234,Supervisor,ãäÇÍí ÈÇäí
+user28,1234,Supervisor,ÚÇãÑ ÇáÔåÑí
+user29,1234,Supervisor,íÍíì ÇáÈÇÑŞí
+user30,1234,Supervisor,ÈÏÑ ÍÏíÔ
+user31,1234,Supervisor,ãÍãÏ ÇáÚÇÕãí
+user32,1234,Supervisor,ÚÈÏÇááå ÌĞÑİ
+user33,1234,Supervisor,ÍãæÏ ÑÇÔÏ
+user34,1234,Supervisor,ÚÈÏÇáÑÍãä ÏãÇÓ
+user35,1234,Supervisor,ÓáãÇä ĞíÈ
+user36,1234,Supervisor,ÚÈÏÇáãÌíÏ ÇáÍÇÑËí
+user37,1234,Supervisor,ÚÈÏÇáÚÒíÒ ÓÚÏ
+user38,1234,Supervisor,ÎÇÒã ÚÈÏÇááå
+user39,1234,Supervisor,ãÍãÏ ÛÑã
+user40,1234,Supervisor,äÇíİ ãÍãÏ
+user41,1234,Supervisor,İÇÑÓ ãÈÇÑß
+user42,1234,Supervisor,ãÍãÏ ÏæíÓ
+user43,1234,Supervisor,ãÍãÏ ÇáÍÇÑËí
+user44,1234,Supervisor,ãÍãÏ ãÕØİì
+user45,1234,Supervisor,ÍÓíä ÇáŞÍØÇäí
+user46,1234,Supervisor,íÍí ÇáÈÇÑŞí
+user47,1234,Supervisor,ÚÇÆÖ ÇáÇÓãÑí
+user48,1234,Supervisor,ÍÒÇã ÇáÔåÑí
+user49,1234,Supervisor,ÚÈíÏ ÚÇÆÖ
+user50,1234,Supervisor,ÇÍãÏ ãÓİÑ
+user51,1234,Supervisor,ÓÚíÏ ÇáÔåÑÇäí
+user52,1234,Supervisor,ÓáØÇä ÚÈÏÇááå
+user53,1234,Supervisor,ÚÈÏÇáÑÍãä ÍÓíä
+user54,1234,Supervisor,ÓáíãÇä ãÓãÚ
+user55,1234,Supervisor,ãÍãÏ ÚØíİ
+user56,1234,Supervisor,ãæÓì ÇáæÇÏÚí
+user57,1234,Supervisor,ãÍãÏ ÇáÔÈÑŞí
+user58,1234,Supervisor,Úæä ÌÈÑÇä
+user59,1234,Supervisor,ÎÇáÏ ÔÇÑ
+user60,1234,Supervisor,ÇäÓ ÇáŞÍØÇäí
+user61,1234,Supervisor,ØÇÑŞ ÇáÚãÑí
+user62,1234,Supervisor,ÓÚíÏ ÙİíÑ
+user63,1234,Supervisor,äÇÕÑ ÚæÇÖ
+user64,1234,Supervisor,ÚÒíÒ ÓÚÏ
+user65,1234,Supervisor,ÈäÏÑ ãİÑÍ ÇáßÇÓí
+user66,1234,Supervisor,Úæä ÚÈÏÇááå
+user67,1234,Supervisor,ÈäÏÑ_ãİÑÍ_ÇáßÇÓí
+user68,1234,Supervisor,Úæä_ÚÈÏÇááå
+user69,1234,Supervisor,ÚÈÏ Çááå ÇáÚáíÇäí
+user70,1234,Supervisor,ÚÈÏÇááå ÚãÑ
+user71,1234,Supervisor,ÎÇáÏ İíÕá
+user72,1234,Supervisor,ÚÈÏÇááå ÙÇİÑ
+user73,1234,Supervisor,äÇÕÑÇáÕÚÇŞ
+user74,1234,Supervisor,ÚÈÏÇáÚÒíÒ Ôæíá
+user75,1234,Supervisor,ßãÇá ÇáÔíÎ
+user76,1234,Supervisor,ÓÚíÏ İåÏ
+user77,1234,Supervisor,ÓÚÏ åíİ
+user78,1234,Supervisor,ÚÈÏÇááå ÍáÇí
+user79,1234,Supervisor,ãÍãÏ ãÍÓä
+user80,1234,Supervisor,ÌÈÑÇä ÑÇÚí
+user81,1234,Supervisor,Úáí ÑÇÚí
+user82,1234,Supervisor,ÚÈÏÇááå İÑÍÇä
+user83,1234,Supervisor,ÓÚíÏ ÇáÚãÑí
+user84,1234,Supervisor,ÚÈÏÇááå ÚÇÆÖ
+user85,1234,Supervisor,ÙÇİÑ ãÓİÑ
+user86,1234,Supervisor,ÚÈÏÇááå ÇáÑãíÍ
+user87,1234,Supervisor,ÌãÇá ÇáÇÓãÑí
+user88,1234,Supervisor,ÚíÓì ãÍãÏ
+user89,1234,Supervisor,íÍì ÇáÈÇÑŞí
+user90,1234,Supervisor,ÓáØä ãÍİæÙ
+user91,1234,Supervisor,ÓáØÇä ãÍİæÙ
+user92,1234,Supervisor,ÇÍãÏ ÇáãÔÚÈí
+user93,1234,Supervisor,ÎÇáÏ ÚÇÆÖ
+user94,1234,Supervisor,ÊÑßí ÔáÔ
+user95,1234,Supervisor,ãİáÍ ÓÚæÏ
+user96,1234,Supervisor,ÍãÏ ÇáŞÍØÇäí
+user97,1234,Supervisor,ãÊÚÈ ÇÍãÏ
+user98,1234,Supervisor,ÇÍãÏ ãİÑÍ
+user99,1234,Supervisor,ÚÈÏÇáÇáå ÇáÇÓãÑí
+user100,1234,Supervisor,Úáí ÒÇåÑ
+user101,1234,Supervisor,İíÕá ÚÈÏÇááå
+user102,1234,Supervisor,ÚÈÏÇáÚÒíÒ
+user103,1234,Supervisor,ãÍãÏ ãÚíØ
+user104,1234,Supervisor,ãÍãÏ ÇáÇÍãÑí
+user105,1234,Supervisor,ÚÈÏÇáßÑíã ÇáŞÍØÇäí
+user106,1234,Supervisor,ãÇÌÏ ÇáÛãÑí
+user107,1234,Supervisor,ÇÍãÏ ÓÚíÏ
+user108,1234,Supervisor,ÌãÇá ÔÚÈÇä
+user109,1234,Supervisor,ÈäÏÑ ÍÑíÕí
+user110,1234,Supervisor,İíÕá ãÓÊæÑ
+user111,1234,Supervisor,ÔÇíÚ ãÍãÏ
+user112,1234,contractor,İÇá
+user113,1234,contractor,ÇİŞ ÇáÈäíÉ
+user114,1234,contractor,ÏáÊÇ
+user115,1234,contractor,ÇáÌåÇÒ
+user116,1234,contractor,ãÓÇÑÇÊ ÇáİÇæ
+user117,1234,contractor,ÏÑÉ ÇáÕÎÑíÉ
+user118,1234,contractor,ÇáÈßÑí
+user119,1234,contractor,ĞÇÊ ÇáÈÑæÌ
+user120,1234,contractor,Èä ÚØÚØ
+user121,1234,contractor,Èä ÙİÑÉ
+user122,1234,contractor,ÇáİáŞí
+user123,1234,contractor,ÇáßÈÑíÔ
+user124,1234,contractor,ãÍãÏ ÚÈÏÇáæåÇÈ
+user125,1234,contractor,ÕÑÍ ÇáÊŞäíÉ
+user126,1234,contractor,ÓáßæÈ
+user127,1234,contractor,ÇäÌÇÒ ÇáÌäæÈ
+user128,1234,contractor,ÇáæÓØ ÇáÌäæÈí
+user129,1234,contractor,Èä åĞÇá
+user130,1234,contractor,ÚÈÇÌÉ
+user131,1234,contractor,åíİ
+user132,1234,contractor,äãØ ÇáÊäãíÉ
+user133,1234,contractor,ÇáãåÑ ÇáÚÑÈí
+user134,1234,contractor,ÇáÔÈßÇÊ ÇáßÈÑì
+user135,1234,contractor,ÇáÃæØÇä ÇáÍÏíËÉ
+user136,1234,contractor,ÚáæÇä
+user137,1234,contractor,ÎÇáÏ Èä ÌÑÈæÚ
+user138,1234,contractor,ÇáÌäÇÍíä
+user139,1234,contractor,ÇáÍÓä
+user140,1234,contractor,ÔÈßÉ ÇáÇäÔÇÁ
+user141,1234,contractor,ÇáÓÑÍÇä
+user142,1234,contractor,ÎÒÇã
+user143,1234,contractor,ÏÓÑ
+user144,1234,consultant,ÓÚæÏí ßæäÓáÊ
+user145,1234,consultant,İíæá 
+user146,1234,consultant,ÇáÎÈÑÇÁ ÇáããíÒíä
+user147,1234,consultant,ÎØíÈ æÚáãí
+user148,1234,consultant,ÑæÇİÏ 
+user149,1234,Office,Balsamr Office ãÑßÒ ÈáÓãÑ
+user150,1234,Office,Al-Namas Office ãßÊÈ ÇáäãÇÕ
+user151,1234,Office,Al-Mujardah Office ãÑßÒÇáãÌÇÑÏå
+user152,1234,Office,Sabt Al-Ulaya Office ãÑßÒ ÓÈÊ ÇáÚáÇíÇ
+user153,1234,Office,Bariq Office ãÑßÒ ÈÇÑŞ
+user154,1234,Office,Rajal Al-Ma'a Office ãÑßÒ ÑÌÇá ÇáãÚ
+user155,1234,Office,Bishah Office ãßÊÈ ÈíÔå
+user156,1234,Office,Abha Office ãßÊÈ ÃÈåÇ
+user157,1234,Office,Turaib Office ãÑßÒ ØÑíÈ
+user158,1234,Office,Ahad Rafidah Office ãßÊÈ ÃÍÏ ÑİíÏÉ
+user159,1234,Office,Saraa Ubaidah Office ãßÊÈ ÓÑÇÉ ÚÈíÏÉ
+user160,1234,Office,Khamees Masheet Office ãßÊÈ ÎãíÓ ãÔíØ
+user161,1234,Office,Tasleeth Office ãÑßÒ ÊËáíË
+user162,1234,Office,Ahad Rafidah Office ãßÊÈ ÃÍÏ ÑİíÏÉ
+user163,1234,Office,Dhahrah Al-Janoub Office ãÑßÒ ÙåÑÇä ÇáÌäæÈ
