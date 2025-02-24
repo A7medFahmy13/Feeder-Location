@@ -124,6 +124,13 @@ if selected_zones:
     if not df_zones_filtered.empty:
         df_points_filtered = df_points[df_points.geometry.within(df_zones_filtered.unary_union)]
 
+    # ✅ **إضافة فلتر `Feeder ID`**
+    available_feeders = df_points_filtered["feeder-id"].dropna().unique().tolist()
+    selected_feeders = st.multiselect("🔍 اختر Feeder ID", available_feeders)
+
+    if selected_feeders:
+        df_points_filtered = df_points_filtered[df_points_filtered["feeder-id"].isin(selected_feeders)]
+
     with st.expander(f"📊 بيانات المناطق ({len(df_zones_filtered)})", expanded=True):
         st.dataframe(df_zones_filtered.drop(columns=["geometry"], errors="ignore"))
 
