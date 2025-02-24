@@ -62,11 +62,12 @@ else:
     st.title("🌍 Aseer Monitoring Map")
     st.write(f"مرحبًا، {st.session_state['user']} 👋")
 
-# ✅ تحميل البيانات
+# ✅ طباعة المسار الحالي في Streamlit Cloud لمعرفة مكان تشغيل التطبيق
+st.write("📂 المسار الحالي:", os.getcwd())
+
+# ✅ تحميل بيانات المناطق فقط (دون ملف النقاط)
 @st.cache_resource
-def load_stored_data():
-    df_zones, df_points = gpd.GeoDataFrame(), gpd.GeoDataFrame()
-    
+def load_zones():
     try:
         df_zones = pd.read_excel("New Asser_Boundaries.xlsx")
         df_zones.columns = df_zones.columns.str.strip().str.lower()
@@ -74,34 +75,33 @@ def load_stored_data():
         if "wkt" in df_zones.columns:
             df_zones["geometry"] = df_zones["wkt"].apply(lambda x: wkt_loads(x) if isinstance(x, str) else None)
             df_zones = gpd.GeoDataFrame(df_zones, geometry="geometry")
+        return df_zones
     except Exception as e:
         st.error(f"⚠️ خطأ في تحميل بيانات المناطق: {e}")
+        return gpd.GeoDataFrame()
 
-    # ✅ حل مشكلة تعذر تحميل ملف النقاط
-    file_path = os.path.join(os.getcwd(), "split_Coordinates_Data.csv")
-    
-    if os.path.exists(file_path):
-        try:
-            df_points = pd.read_csv(file_path, encoding="utf-8")
-            df_points.columns = df_points.columns.str.strip().str.lower()
-            df_points["geometry"] = df_points.apply(lambda row: Point(row["longitude"], row["latitude"]), axis=1)
-            df_points = gpd.GeoDataFrame(df_points, geometry="geometry")
-        except Exception as e:
-            st.error(f"⚠️ خطأ: تعذر تحميل بيانات النقاط: {e}")
-    else:
-        st.warning("⚠️ لم يتم العثور على ملف 'split_Coordinates_Data.csv'. يرجى رفعه يدويًا.")
-        uploaded_file = st.file_uploader("📂 قم برفع ملف البيانات", type=["csv"])
-        if uploaded_file:
-            df_points = pd.read_csv(uploaded_file, encoding="utf-8")
-            df_points.columns = df_points.columns.str.strip().str.lower()
-            df_points["geometry"] = df_points.apply(lambda row: Point(row["longitude"], row["latitude"]), axis=1)
-            df_points = gpd.GeoDataFrame(df_points, geometry="geometry")
-        else:
-            df_points = gpd.GeoDataFrame()
+df_zones = load_zones()
 
-    return df_zones, df_points
+# ✅ التحقق مما إذا كان ملف النقاط موجودًا
+file_path = os.path.join(os.getcwd(), "split_Coordinates_Data.csv")
+df_points = gpd.GeoDataFrame()
 
-df_zones, df_points = load_stored_data()
+if os.path.exists(file_path):
+    try:
+        df_points = pd.read_csv(file_path, encoding="utf-8")
+        df_points.columns = df_points.columns.str.strip().str.lower()
+        df_points["geometry"] = df_points.apply(lambda row: Point(row["longitude"], row["latitude"]), axis=1)
+        df_points = gpd.GeoDataFrame(df_points, geometry="geometry")
+    except Exception as e:
+        st.error(f"⚠️ خطأ: تعذر تحميل بيانات النقاط: {e}")
+else:
+    st.warning("⚠️ لم يتم العثور على ملف 'split_Coordinates_Data.csv'. يرجى رفعه يدويًا.")
+    uploaded_file = st.file_uploader("📂 قم برفع ملف البيانات", type=["csv"])
+    if uploaded_file:
+        df_points = pd.read_csv(uploaded_file, encoding="utf-8")
+        df_points.columns = df_points.columns.str.strip().str.lower()
+        df_points["geometry"] = df_points.apply(lambda row: Point(row["longitude"], row["latitude"]), axis=1)
+        df_points = gpd.GeoDataFrame(df_points, geometry="geometry")
 
 # ✅ تصفية البيانات بناءً على المستخدم
 user_role = st.session_state["role"]
@@ -131,7 +131,7 @@ if selected_zones:
     with st.expander(f"📍 بيانات النقاط ({len(df_points_filtered)})", expanded=True):
         st.dataframe(df_points_filtered.drop(columns=["geometry"], errors="ignore"))
 
-# ✅ إعداد الخريطة
+# ✅ إعداد وعرض الخريطة
 st.subheader("🌍 الخريطة التفاعلية")
 m = folium.Map(location=[18.2, 42.5], zoom_start=8)
 
@@ -149,5 +149,4 @@ for _, row in df_points_filtered.iterrows():
         icon=folium.Icon(color="blue", icon="info-sign")
     ).add_to(m)
 
-# ✅ عرض الخريطة
 folium_static(m)
