@@ -6,6 +6,34 @@ import hashlib
 from streamlit_folium import folium_static
 from shapely.wkt import loads as wkt_loads
 from shapely.geometry import Point
+import os
+import pandas as pd
+import streamlit as st
+
+# تحديد مسار ملف البيانات
+file_path = "Split_Coordinates_Data.csv"
+
+# التحقق مما إذا كان الملف موجودًا
+if os.path.exists(file_path):
+    st.success(f"✅ الملف موجود في: {file_path}")
+    
+    # تجربة قراءة الملف مع التعامل مع مشاكل الترميز
+    try:
+        data = pd.read_csv(file_path, encoding="utf-8")  # محاولة قراءة الملف بترميز UTF-8
+        st.write("✅ تم تحميل البيانات بنجاح!")
+    except UnicodeDecodeError:
+        data = pd.read_csv(file_path, encoding="latin1")  # تجربة ترميز آخر إذا فشل UTF-8
+        st.write("✅ تم تحميل البيانات بنجاح باستخدام latin1!")
+
+    # عرض أول 5 صفوف من البيانات للتحقق
+    st.dataframe(data.head())
+
+else:
+    st.error(f"⚠️ خطأ: تعذر العثور على الملف: {file_path}")
+
+    # عرض جميع الملفات الموجودة في المجلد الحالي للتأكد من أن الملف مرفوع
+    st.write("📂 الملفات المتاحة في المجلد الحالي:")
+    st.write(os.listdir("."))
 
 # ✅ تحميل بيانات المستخدمين
 @st.cache_resource
