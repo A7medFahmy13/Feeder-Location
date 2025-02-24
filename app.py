@@ -2,154 +2,137 @@ import streamlit as st
 import geopandas as gpd
 import pandas as pd
 import folium
-import random
+import hashlib
 from streamlit_folium import folium_static
-from shapely.geometry import Point
 from shapely.wkt import loads as wkt_loads
+from shapely.geometry import Point
 
-# ✅ تحميل بيانات النقاط مع تنظيف الأسماء
+# ✅ تحميل بيانات المستخدمين مع تشفير كلمات المرور
 @st.cache_data
-def load_stored_points():
-    csv_file_path = "Split_Coordinates_Data.csv"
-    df = pd.read_csv(csv_file_path)
-
-    # 📌 تنظيف أسماء الأعمدة
-    df.columns = df.columns.str.strip().str.upper().str.replace("-", "_")
-
-    # ✅ التأكد من وجود LATITUDE و LONGITUDE
-    if "LONGITUDE" in df.columns:
-        df["LONGITUDE"] = df["LONGITUDE"]
-    elif "LONG" in df.columns:
-        df["LONGITUDE"] = df["LONG"]
-    elif "X" in df.columns:
-        df["LONGITUDE"] = df["X"]
-    else:
-        st.error("⚠️ لم يتم العثور على `LONGITUDE` في البيانات!")
-        return pd.DataFrame()
-
-    if "LATITUDE" in df.columns:
-        df["LATITUDE"] = df["LATITUDE"]
-    elif "LAT" in df.columns:
-        df["LATITUDE"] = df["LAT"]
-    elif "Y" in df.columns:
-        df["LATITUDE"] = df["Y"]
-    else:
-        st.error("⚠️ لم يتم العثور على `LATITUDE` في البيانات!")
-        return pd.DataFrame()
-
-    # تحويل الإحداثيات إلى Point
-    df["geometry"] = [Point(lon, lat) for lon, lat in zip(df["LONGITUDE"].fillna(0), df["LATITUDE"].fillna(0))]
-    return df
-
-# ✅ تحميل بيانات المناطق
-@st.cache_data
-def load_stored_zones():
-    excel_zones_path = "New Asser_Boundaries.xlsx"
-    df = pd.read_excel(excel_zones_path)
+def load_users():
+    file_path = "users.xlsx"
+    df = pd.read_excel(file_path)
     df.columns = df.columns.str.strip().str.lower()
-    if "wkt" in df.columns:
-        df["geometry"] = df["wkt"].apply(lambda x: wkt_loads(x) if isinstance(x, str) and pd.notnull(x) else None)
-    return gpd.GeoDataFrame(df, geometry=df["geometry"])
+    
+    required_columns = {"username", "password", "role", "linked_name"}
+    if not required_columns.issubset(df.columns):
+        st.error("❌ خطأ: ملف المستخدمين غير مكتمل. تأكد من صحة البيانات!")
+        return {}, {}, {}
+    
+    df["username"] = df["username"].str.strip().str.lower()
+    df["password"] = df["password"].apply(lambda x: hashlib.sha256(str(x).encode()).hexdigest())
+    df["role"] = df["role"].str.strip().str.lower()
+    df["linked_name"] = df["linked_name"].str.strip().str.lower().replace(" ", "_")
+    
+    users_dict = df.set_index("username")["password"].to_dict()
+    user_roles_dict = df.set_index("username")["role"].to_dict()
+    user_linked_names_dict = df.set_index("username")["linked_name"].to_dict()
+    
+    return users_dict, user_roles_dict, user_linked_names_dict
 
-# ✅ توليد ألوان عشوائية لكل منطقة
-def get_random_color():
-    return "#{:06x}".format(random.randint(0, 0xFFFFFF))
+USERS, USER_ROLES, USER_LINKED_NAMES = load_users()
 
-# ✅ تشغيل التطبيق
-def main():
-    st.markdown("<div style='text-align: center; font-size: 24px;'>🌟 **لا تنسَ ذكر الله** 🌟</div>", unsafe_allow_html=True)
+# ✅ التحقق من تسجيل الدخول
+def authenticate(username, password):
+    username, password = username.strip().lower(), hashlib.sha256(password.strip().encode()).hexdigest()
+    return USERS.get(username) == password
+
+# ✅ واجهة تسجيل الدخول
+if "authenticated" not in st.session_state:
+    st.session_state["authenticated"] = False
+
+if not st.session_state["authenticated"]:
+    st.title("🔑 تسجيل الدخول")
+    username = st.text_input("اسم المستخدم").strip().lower()
+    password = st.text_input("كلمة المرور", type="password").strip()
+    if st.button("تسجيل الدخول"):
+        if authenticate(username, password):
+            st.session_state.update({
+                "authenticated": True,
+                "user": username,
+                "role": USER_ROLES.get(username, "unknown"),
+                "linked_name": USER_LINKED_NAMES.get(username, "unknown")
+            })
+            st.rerun()
+        else:
+            st.error("❌ اسم المستخدم أو كلمة المرور غير صحيحة!")
+    st.stop()
+else:
+    st.sidebar.button("🔓 تسجيل الخروج", on_click=lambda: st.session_state.update({"authenticated": False}))
     st.title("🌍 Aseer Monitoring Map")
+    st.write(f"مرحبًا، {st.session_state['user']} 👋")
 
-    # تحميل البيانات
-    df_zones = load_stored_zones()
-    df_points = load_stored_points()
+# ✅ تحميل البيانات من ملف Excel بدلاً من GeoJSON
+@st.cache_data
+def load_stored_data():
+    try:
+        df_zones = pd.read_excel("New Asser_Boundaries.xlsx")
+        df_zones.columns = df_zones.columns.str.strip().str.lower()
+        
+        if "wkt" in df_zones.columns:
+            df_zones["geometry"] = df_zones["wkt"].apply(lambda x: wkt_loads(x) if isinstance(x, str) else None)
+            df_zones = gpd.GeoDataFrame(df_zones, geometry="geometry")
+        else:
+            st.error("❌ خطأ: ملف `New Asser_Boundaries.xlsx` لا يحتوي على عمود `WKT`.")
+    except Exception as e:
+        st.error(f"⚠️ خطأ في تحميل ملف `New Asser_Boundaries.xlsx`: {e}")
+        df_zones = gpd.GeoDataFrame()
+    
+    try:
+        df_points = pd.read_csv("split_Coordinates_Data.csv")
+        df_points.columns = df_points.columns.str.strip().str.lower()
+        df_points["geometry"] = df_points.apply(lambda row: Point(row["longitude"], row["latitude"]), axis=1)
+        df_points = gpd.GeoDataFrame(df_points, geometry="geometry")
+    except Exception as e:
+        st.error(f"⚠️ خطأ: تعذر تحميل ملف `split_Coordinates_Data.csv`: {e}")
+        df_points = gpd.GeoDataFrame()
+    
+    return df_zones, df_points
 
-    if df_points.empty:
-        st.warning("⚠️ لم يتم تحميل بيانات النقاط بسبب خطأ في الإحداثيات!")
-        return
+# تحميل البيانات
+df_zones, df_points = load_stored_data()
 
-    # 🔍 **الفلتر الرئيسي**
-    filter_options = {
-        "office": "المكتب",
-        "contractor": "المقاول",
-        "consultant": "الاستشاري",
-        "om_supervisor": "مشرف التشغيل والصيانة",
-        "mv_supervisor": "مشرف الصيانة المتوسطة"
-    }
+# ✅ تصفية البيانات بناءً على دور المستخدم
+user_role = st.session_state["role"]
+linked_name = st.session_state["linked_name"]
+if user_role != "admin":
+    filter_columns = ["om_supervisor", "mv_supervisor", user_role]
+    relevant_columns = [col for col in filter_columns if col in df_zones.columns]
+    if relevant_columns:
+        filter_condition = df_zones[relevant_columns].apply(lambda row: any(row.astype(str).str.contains(linked_name, na=False, case=False)), axis=1)
+        df_zones = df_zones[filter_condition]
 
-    selected_filter = st.selectbox("🛠️ اختر نوع الفلترة", ["بدون فلترة"] + list(filter_options.keys()))
+# ✅ فلتر لاختيار المناطق المتاحة للمستخدم فقط
+available_zones = df_zones["zone"].unique()
+selected_zones = st.multiselect("اختر المناطق", available_zones)
 
-    if selected_filter != "بدون فلترة":
-        filter_list = sorted(df_zones[selected_filter].dropna().astype(str).unique().tolist())
-        selected_value = st.selectbox(f"🔍 اختر {filter_options[selected_filter]}", ["بدون تحديد"] + filter_list)
+if selected_zones:
+    df_zones = df_zones[df_zones["zone"].isin(selected_zones)]
+    df_points = df_points[df_points.geometry.within(df_zones.unary_union)]
+    feeder_ids = df_points["feeder-id"].dropna().unique()
+    selected_feeder = st.multiselect("اختر Feeder ID", feeder_ids)
+    if selected_feeder:
+        df_points = df_points[df_points["feeder-id"].isin(selected_feeder)]
 
-        if selected_value != "بدون تحديد":
-            filtered_df = df_zones[df_zones[selected_filter].astype(str) == selected_value]
+    st.subheader(f"📊 بيانات المنطقة (عدد: {len(df_zones)})")
+    st.dataframe(df_zones.drop(columns=["geometry"], errors='ignore'))
 
-            # 🔍 اختيار المناطق
-            selected_zones = st.multiselect("📌 اختر المناطق", filtered_df["zone"].dropna().astype(str).unique().tolist())
+    st.subheader(f"📍 بيانات النقاط (عدد: {len(df_points)})")
+    st.dataframe(df_points.drop(columns=["geometry"], errors='ignore'))
 
-            if selected_zones:
-                df_zones_filtered = gpd.GeoDataFrame(filtered_df[filtered_df["zone"].isin(selected_zones)], geometry=filtered_df["geometry"])
+    # ✅ إنشاء الخريطة التفاعلية مع الاتجاهات
+    st.subheader("🌍 الخريطة التفاعلية")
+    m = folium.Map(location=[18.2, 42.5], zoom_start=8)
 
-                if df_zones_filtered.empty:
-                    st.warning("⚠️ لم يتم العثور على أي مناطق متاحة للخريطة!")
-                    return
+    for _, row in df_zones.iterrows():
+        if row["geometry"] and row["geometry"].geom_type == "Polygon":
+            folium.GeoJson(row["geometry"], name=row.get("zone", "Unknown Zone")).add_to(m)
 
-                df_points_inside = df_points[df_points["geometry"].apply(lambda point: any(zone.contains(point) for zone in df_zones_filtered["geometry"] if zone))]
+    for _, row in df_points.iterrows():
+        folium.Marker(
+            location=[row["latitude"], row["longitude"]],
+            popup=row.get("description", "No description"),
+            icon=folium.Icon(color="blue", icon="info-sign")
+        ).add_to(m)
 
-                # 🔍 **إضافة تصفية `FEEDER_ID`**
-                if "FEEDER_ID" in df_points_inside.columns:
-                    feeder_ids = sorted(df_points_inside["FEEDER_ID"].dropna().astype(str).unique().tolist())
-                    selected_feeder = st.multiselect("🔌 اختر `FEEDER ID`", feeder_ids)
-                    if selected_feeder:
-                        df_points_inside = df_points_inside[df_points_inside["FEEDER_ID"].astype(str).isin(selected_feeder)]
-                else:
-                    st.warning("⚠️ لم يتم العثور على `FEEDER ID` في ملف النقاط!")
-
-                # 📊 عرض **جدول المناطق مع الوصف**
-                st.subheader("📊 تفاصيل المناطق المحددة")
-                st.dataframe(df_zones_filtered.drop(columns=["geometry", "wkt"], errors='ignore'))
-
-                # 📍 عرض **جدول النقاط قبل الخريطة**
-                st.subheader(f"📍 النقاط داخل المناطق المختارة ({len(df_points_inside)})")
-                st.dataframe(df_points_inside.drop(columns=["geometry"], errors='ignore'))
-
-                # 🌍 إعداد الخريطة مع Zoom Extent
-                if not df_zones_filtered.empty and df_zones_filtered["geometry"].notnull().any():
-                    minx, miny, maxx, maxy = df_zones_filtered.total_bounds
-                    m = folium.Map(zoom_start=12)
-                    m.fit_bounds([[miny, minx], [maxy, maxx]])
-                else:
-                    m = folium.Map(location=[18.3, 42.5], zoom_start=10)  # إحداثيات افتراضية
-
-                # 📌 إضافة المناطق بألوان مختلفة
-                colors = {zone: get_random_color() for zone in df_zones_filtered["zone"].unique()}
-                for _, row in df_zones_filtered.iterrows():
-                    folium.GeoJson(row["geometry"], name=row["zone"],
-                                   style_function=lambda feature, color=colors[row["zone"]]: {"fillColor": color, "color": "black", "weight": 2, "fillOpacity": 0.5}
-                                  ).add_to(m)
-
-                # 📍 إضافة النقاط للخريطة
-                for _, row in df_points_inside.iterrows():
-                    location_url = f"https://www.google.com/maps?q={row['LATITUDE']},{row['LONGITUDE']}"
-                    popup_content = f"""
-                    <b>FEEDER ID:</b> {row.get('FEEDER_ID', 'غير متوفر')}<br>
-                    <b>الاسم:</b> {row.get('NAME', 'غير متوفر')}<br>
-                    <b>الوصف:</b> {row.get('DESCRIPTION', 'غير متوفر')}<br>
-                    <a href='{location_url}' target='_blank'>🔗 الذهاب إلى الموقع</a>
-                    """
-                    folium.Marker(
-                        location=[row["LATITUDE"], row["LONGITUDE"]],
-                        popup=folium.Popup(popup_content, max_width=300),
-                        icon=folium.Icon(color="blue")
-                    ).add_to(m)
-
-                # 🗺️ عرض **الخريطة بعد النقاط**
-                st.subheader("🗺️ الخريطة الجغرافية")
-                folium_static(m)
-
-if __name__ == "__main__":
-    main()
-
-
+    folium_static(m)
