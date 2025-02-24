@@ -4,6 +4,8 @@ import pandas as pd
 import folium
 import hashlib
 import os
+import requests
+from io import StringIO
 from streamlit_folium import folium_static
 from shapely.wkt import loads as wkt_loads
 from shapely.geometry import Point
@@ -62,10 +64,7 @@ else:
     st.title("🌍 Aseer Monitoring Map")
     st.write(f"مرحبًا، {st.session_state['user']} 👋")
 
-# ✅ طباعة المسار الحالي في Streamlit Cloud لمعرفة مكان تشغيل التطبيق
-st.write("📂 المسار الحالي:", os.getcwd())
-
-# ✅ تحميل بيانات المناطق فقط (دون ملف النقاط)
+# ✅ تحميل بيانات المناطق
 @st.cache_resource
 def load_zones():
     try:
@@ -82,26 +81,26 @@ def load_zones():
 
 df_zones = load_zones()
 
-# ✅ التحقق مما إذا كان ملف النقاط موجودًا
-file_path = os.path.join(os.getcwd(), "split_Coordinates_Data.csv")
-df_points = gpd.GeoDataFrame()
-
-if os.path.exists(file_path):
+# ✅ تحميل بيانات النقاط من Google Drive
+@st.cache_resource
+def load_points_from_drive():
+    google_drive_url = "https://drive.google.com/uc?export=download&id=1gR51HKKCY7PSNmUOnHS5-A7HFCx5uWxa"
     try:
-        df_points = pd.read_csv(file_path, encoding="utf-8")
-        df_points.columns = df_points.columns.str.strip().str.lower()
-        df_points["geometry"] = df_points.apply(lambda row: Point(row["longitude"], row["latitude"]), axis=1)
-        df_points = gpd.GeoDataFrame(df_points, geometry="geometry")
+        response = requests.get(google_drive_url)
+        if response.status_code == 200:
+            csv_data = StringIO(response.text)
+            df_points = pd.read_csv(csv_data)
+            df_points.columns = df_points.columns.str.strip().str.lower()
+            df_points["geometry"] = df_points.apply(lambda row: Point(row["longitude"], row["latitude"]), axis=1)
+            return gpd.GeoDataFrame(df_points, geometry="geometry")
+        else:
+            st.error(f"⚠️ تعذر تحميل الملف من Google Drive. رمز الحالة: {response.status_code}")
+            return gpd.GeoDataFrame()
     except Exception as e:
-        st.error(f"⚠️ خطأ: تعذر تحميل بيانات النقاط: {e}")
-else:
-    st.warning("⚠️ لم يتم العثور على ملف 'split_Coordinates_Data.csv'. يرجى رفعه يدويًا.")
-    uploaded_file = st.file_uploader("📂 قم برفع ملف البيانات", type=["csv"])
-    if uploaded_file:
-        df_points = pd.read_csv(uploaded_file, encoding="utf-8")
-        df_points.columns = df_points.columns.str.strip().str.lower()
-        df_points["geometry"] = df_points.apply(lambda row: Point(row["longitude"], row["latitude"]), axis=1)
-        df_points = gpd.GeoDataFrame(df_points, geometry="geometry")
+        st.error(f"⚠️ خطأ: تعذر تحميل بيانات النقاط من Google Drive: {e}")
+        return gpd.GeoDataFrame()
+
+df_points = load_points_from_drive()
 
 # ✅ تصفية البيانات بناءً على المستخدم
 user_role = st.session_state["role"]
@@ -138,9 +137,6 @@ m = folium.Map(location=[18.2, 42.5], zoom_start=8)
 if not df_zones_filtered.empty:
     for _, row in df_zones_filtered.iterrows():
         folium.GeoJson(row["geometry"].__geo_interface__).add_to(m)
-
-    bounds = df_zones_filtered.total_bounds
-    m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
 
 for _, row in df_points_filtered.iterrows():
     folium.Marker(
