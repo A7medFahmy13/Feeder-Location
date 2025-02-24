@@ -100,25 +100,66 @@ if user_role != "admin":
 # ✅ اختيار المناطق
 selected_zones = st.multiselect("اختر المناطق", df_zones["zone"].unique())
 
+# تهيئة المتغيرات
+df_zones_filtered = gpd.GeoDataFrame()
+df_points_filtered = gpd.GeoDataFrame()
+
 if selected_zones:
-    df_zones = df_zones[df_zones["zone"].isin(selected_zones)]
-    df_points = df_points[df_points.geometry.within(df_zones.unary_union)]
+    df_zones_filtered = df_zones[df_zones["zone"].isin(selected_zones)].copy()
+    
+    # تفكيك الـ MultiPolygon إلى Polygons فردية
+    df_zones_filtered = df_zones_filtered.explode(index_parts=True)
+    
+    # تصفية النقاط
+    if not df_zones_filtered.empty:
+        df_points_filtered = df_points[df_points.geometry.within(df_zones_filtered.unary_union)]
 
-    with st.expander(f"📊 بيانات المناطق ({len(df_zones)})", expanded=True):
-        st.dataframe(df_zones.drop(columns=["geometry"], errors="ignore"))
+    with st.expander(f"📊 بيانات المناطق ({len(df_zones_filtered)})", expanded=True):
+        st.dataframe(df_zones_filtered.drop(columns=["geometry"], errors="ignore"))
 
-    with st.expander(f"📍 بيانات النقاط ({len(df_points)})", expanded=True):
-        st.dataframe(df_points.drop(columns=["geometry"], errors="ignore"))
+    with st.expander(f"📍 بيانات النقاط ({len(df_points_filtered)})", expanded=True):
+        st.dataframe(df_points_filtered.drop(columns=["geometry"], errors="ignore"))
 
 # ✅ إعداد الخريطة
 st.subheader("🌍 الخريطة التفاعلية")
 m = folium.Map(location=[18.2, 42.5], zoom_start=8)
 
-for _, row in df_zones.iterrows():
-    if row["geometry"] and row["geometry"].geom_type == "Polygon":
-        folium.GeoJson(row["geometry"], name=row.get("zone", "Unknown Zone")).add_to(m)
+# إضافة المناطق المختارة
+if not df_zones_filtered.empty:
+    for idx, row in df_zones_filtered.iterrows():
+        geom = row["geometry"]
+        
+        # معالجة الأنواع المختلفة للأشكال الهندسية
+        if geom.geom_type == 'MultiPolygon':
+            for polygon in geom.geoms:
+                folium.GeoJson(
+                    polygon.__geo_interface__,
+                    name=row.get("zone", "Unknown Zone"),
+                    style_function=lambda x: {
+                        'fillColor': '#ff0000',
+                        'color': '#000000',
+                        'weight': 1,
+                        'fillOpacity': 0.3
+                    }
+                ).add_to(m)
+        elif geom.geom_type == 'Polygon':
+            folium.GeoJson(
+                geom.__geo_interface__,
+                name=row.get("zone", "Unknown Zone"),
+                style_function=lambda x: {
+                    'fillColor': '#ff0000',
+                    'color': '#000000',
+                    'weight': 1,
+                    'fillOpacity': 0.3
+                }
+            ).add_to(m)
+    
+    # ضبط حدود الخريطة لتشمل كل المناطق المختارة
+    bounds = df_zones_filtered.total_bounds
+    m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
 
-for _, row in df_points.iterrows():
+# إضافة النقاط المفلترة
+for _, row in df_points_filtered.iterrows():
     lat, lon = row["latitude"], row["longitude"]
     description = row.get("description", "No description")
 
