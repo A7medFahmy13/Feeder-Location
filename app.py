@@ -3,6 +3,7 @@ import geopandas as gpd
 import pandas as pd
 import folium
 import hashlib
+import os
 from streamlit_folium import folium_static
 from shapely.wkt import loads as wkt_loads
 from shapely.geometry import Point
@@ -76,13 +77,27 @@ def load_stored_data():
     except Exception as e:
         st.error(f"⚠️ خطأ في تحميل بيانات المناطق: {e}")
 
-    try:
-        df_points = pd.read_csv("split_Coordinates_Data.csv")
-        df_points.columns = df_points.columns.str.strip().str.lower()
-        df_points["geometry"] = df_points.apply(lambda row: Point(row["longitude"], row["latitude"]), axis=1)
-        df_points = gpd.GeoDataFrame(df_points, geometry="geometry")
-    except Exception as e:
-        st.error(f"⚠️ خطأ: تعذر تحميل بيانات النقاط: {e}")
+    # ✅ حل مشكلة تعذر تحميل ملف النقاط
+    file_path = os.path.join(os.getcwd(), "split_Coordinates_Data.csv")
+    
+    if os.path.exists(file_path):
+        try:
+            df_points = pd.read_csv(file_path, encoding="utf-8")
+            df_points.columns = df_points.columns.str.strip().str.lower()
+            df_points["geometry"] = df_points.apply(lambda row: Point(row["longitude"], row["latitude"]), axis=1)
+            df_points = gpd.GeoDataFrame(df_points, geometry="geometry")
+        except Exception as e:
+            st.error(f"⚠️ خطأ: تعذر تحميل بيانات النقاط: {e}")
+    else:
+        st.warning("⚠️ لم يتم العثور على ملف 'split_Coordinates_Data.csv'. يرجى رفعه يدويًا.")
+        uploaded_file = st.file_uploader("📂 قم برفع ملف البيانات", type=["csv"])
+        if uploaded_file:
+            df_points = pd.read_csv(uploaded_file, encoding="utf-8")
+            df_points.columns = df_points.columns.str.strip().str.lower()
+            df_points["geometry"] = df_points.apply(lambda row: Point(row["longitude"], row["latitude"]), axis=1)
+            df_points = gpd.GeoDataFrame(df_points, geometry="geometry")
+        else:
+            df_points = gpd.GeoDataFrame()
 
     return df_zones, df_points
 
@@ -100,17 +115,13 @@ if user_role != "admin":
 # ✅ اختيار المناطق
 selected_zones = st.multiselect("اختر المناطق", df_zones["zone"].unique())
 
-# تهيئة المتغيرات
 df_zones_filtered = gpd.GeoDataFrame()
 df_points_filtered = gpd.GeoDataFrame()
 
 if selected_zones:
     df_zones_filtered = df_zones[df_zones["zone"].isin(selected_zones)].copy()
-    
-    # تفكيك الـ MultiPolygon إلى Polygons فردية
     df_zones_filtered = df_zones_filtered.explode(index_parts=True)
-    
-    # تصفية النقاط
+
     if not df_zones_filtered.empty:
         df_points_filtered = df_points[df_points.geometry.within(df_zones_filtered.unary_union)]
 
@@ -124,61 +135,17 @@ if selected_zones:
 st.subheader("🌍 الخريطة التفاعلية")
 m = folium.Map(location=[18.2, 42.5], zoom_start=8)
 
-# إضافة المناطق المختارة
 if not df_zones_filtered.empty:
-    for idx, row in df_zones_filtered.iterrows():
-        geom = row["geometry"]
-        
-        # معالجة الأنواع المختلفة للأشكال الهندسية
-        if geom.geom_type == 'MultiPolygon':
-            for polygon in geom.geoms:
-                folium.GeoJson(
-                    polygon.__geo_interface__,
-                    name=row.get("zone", "Unknown Zone"),
-                    style_function=lambda x: {
-                        'fillColor': '#ff0000',
-                        'color': '#000000',
-                        'weight': 1,
-                        'fillOpacity': 0.3
-                    }
-                ).add_to(m)
-        elif geom.geom_type == 'Polygon':
-            folium.GeoJson(
-                geom.__geo_interface__,
-                name=row.get("zone", "Unknown Zone"),
-                style_function=lambda x: {
-                    'fillColor': '#ff0000',
-                    'color': '#000000',
-                    'weight': 1,
-                    'fillOpacity': 0.3
-                }
-            ).add_to(m)
-    
-    # ضبط حدود الخريطة لتشمل كل المناطق المختارة
+    for _, row in df_zones_filtered.iterrows():
+        folium.GeoJson(row["geometry"].__geo_interface__).add_to(m)
+
     bounds = df_zones_filtered.total_bounds
     m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]])
 
-# إضافة النقاط المفلترة
 for _, row in df_points_filtered.iterrows():
-    lat, lon = row["latitude"], row["longitude"]
-    description = row.get("description", "No description")
-
-    popup_info = f"""
-    <b>📍 الوصف:</b> {description} <br>
-    <b>📡 Feeder ID:</b> {row.get('feeder-id', 'N/A')} <br>
-    <b>🔄 Zone:</b> {row.get('zone', 'N/A')} <br>
-    <b>🕒 Last Update:</b> {row.get('last-update', 'N/A')} <br>
-    <br>
-    <a href="https://www.google.com/maps/dir/?api=1&destination={lat},{lon}" target="_blank">
-        <button style="padding:5px; background-color:green; color:white; border:none; border-radius:3px; cursor:pointer;">
-        🚗 الاتجاهات
-        </button>
-    </a>
-    """
-
     folium.Marker(
-        location=[lat, lon],
-        popup=folium.Popup(popup_info, max_width=300),
+        location=[row["latitude"], row["longitude"]],
+        popup=f"📍 {row.get('description', 'No description')}",
         icon=folium.Icon(color="blue", icon="info-sign")
     ).add_to(m)
 
