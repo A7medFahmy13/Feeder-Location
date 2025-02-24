@@ -90,7 +90,7 @@ def load_points_from_drive():
         if response.status_code == 200:
             csv_data = StringIO(response.text)
             df_points = pd.read_csv(csv_data)
-            df_points.columns = df_points.columns.str.lower().str.strip()  # تأكد من أن الأسماء متناسقة
+            df_points.columns = df_points.columns.str.lower().str.strip()  # توحيد أسماء الأعمدة
             df_points["geometry"] = df_points.apply(lambda row: Point(row["longitude"], row["latitude"]), axis=1)
             return gpd.GeoDataFrame(df_points, geometry="geometry")
         else:
@@ -124,7 +124,7 @@ if selected_zones:
     if not df_zones_filtered.empty:
         df_points_filtered = df_points[df_points.geometry.within(df_zones_filtered.unary_union)]
 
-    # ✅ إضافة فلتر `Feeder ID`
+    # ✅ فلتر `Feeder ID` بناءً على النقاط وليس المناطق
     if "feeder-id" in df_points_filtered.columns:
         available_feeders = df_points_filtered["feeder-id"].dropna().unique().tolist()
         selected_feeders = st.multiselect("🔍 اختر Feeder ID", available_feeders)
@@ -132,7 +132,14 @@ if selected_zones:
         if selected_feeders:
             df_points_filtered = df_points_filtered[df_points_filtered["feeder-id"].isin(selected_feeders)]
     else:
-        st.warning("⚠️ لم يتم العثور على العمود 'feeder-id' في البيانات.")
+        st.warning("⚠️ لم يتم العثور على العمود 'feeder-id' في بيانات النقاط.")
+
+    # ✅ عرض بيانات المناطق والنقاط
+    with st.expander(f"📊 بيانات المناطق ({len(df_zones_filtered)})", expanded=True):
+        st.dataframe(df_zones_filtered.drop(columns=["geometry"], errors="ignore"))
+
+    with st.expander(f"📍 بيانات النقاط ({len(df_points_filtered)})", expanded=True):
+        st.dataframe(df_points_filtered.drop(columns=["geometry"], errors="ignore"))
 
 # ✅ إعداد وعرض الخريطة
 st.subheader("🌍 الخريطة التفاعلية")
@@ -148,12 +155,6 @@ for _, row in df_points_filtered.iterrows():
     <b>📍 الوصف:</b> {description} <br>
     <b>📡 Feeder ID:</b> {feeder_id} <br>
     <b>🔄 Zone:</b> {zone} <br>
-    <br>
-    <a href="https://www.google.com/maps/dir/?api=1&destination={lat},{lon}" target="_blank">
-        <button style="padding:5px; background-color:green; color:white; border:none; border-radius:3px; cursor:pointer;">
-        🚗 الاتجاهات
-        </button>
-    </a>
     """
 
     folium.Marker(
