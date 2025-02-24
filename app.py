@@ -90,7 +90,7 @@ def load_points_from_drive():
         if response.status_code == 200:
             csv_data = StringIO(response.text)
             df_points = pd.read_csv(csv_data)
-            df_points.columns = df_points.columns.str.lower().str.strip()  # توحيد أسماء الأعمدة
+            df_points.columns = df_points.columns.str.lower().str.strip()
             df_points["geometry"] = df_points.apply(lambda row: Point(row["longitude"], row["latitude"]), axis=1)
             return gpd.GeoDataFrame(df_points, geometry="geometry")
         else:
@@ -101,15 +101,6 @@ def load_points_from_drive():
         return gpd.GeoDataFrame()
 
 df_points = load_points_from_drive()
-
-# ✅ تصفية البيانات بناءً على المستخدم
-user_role = st.session_state["role"]
-linked_name = st.session_state["linked_name"]
-
-if user_role != "admin":
-    relevant_columns = [col for col in ["om_supervisor", "mv_supervisor", user_role] if col in df_zones.columns]
-    if relevant_columns:
-        df_zones = df_zones[df_zones[relevant_columns].astype(str).apply(lambda row: row.str.contains(linked_name, na=False, case=False)).any(axis=1)]
 
 # ✅ اختيار المناطق
 selected_zones = st.multiselect("اختر المناطق", df_zones["zone"].unique())
@@ -124,7 +115,7 @@ if selected_zones:
     if not df_zones_filtered.empty:
         df_points_filtered = df_points[df_points.geometry.within(df_zones_filtered.unary_union)]
 
-    # ✅ فلتر `Feeder ID` بناءً على النقاط وليس المناطق
+    # ✅ فلتر `Feeder ID`
     if "feeder-id" in df_points_filtered.columns:
         available_feeders = df_points_filtered["feeder-id"].dropna().unique().tolist()
         selected_feeders = st.multiselect("🔍 اختر Feeder ID", available_feeders)
@@ -134,32 +125,21 @@ if selected_zones:
     else:
         st.warning("⚠️ لم يتم العثور على العمود 'feeder-id' في بيانات النقاط.")
 
-    # ✅ عرض بيانات المناطق والنقاط
-    with st.expander(f"📊 بيانات المناطق ({len(df_zones_filtered)})", expanded=True):
-        st.dataframe(df_zones_filtered.drop(columns=["geometry"], errors="ignore"))
-
-    with st.expander(f"📍 بيانات النقاط ({len(df_points_filtered)})", expanded=True):
-        st.dataframe(df_points_filtered.drop(columns=["geometry"], errors="ignore"))
-
 # ✅ إعداد وعرض الخريطة
 st.subheader("🌍 الخريطة التفاعلية")
 m = folium.Map(location=[18.2, 42.5], zoom_start=8)
 
+# ✅ عرض المناطق المختارة
+if not df_zones_filtered.empty:
+    folium.GeoJson(df_zones_filtered.geometry, name="Zones", style_function=lambda x: {
+        'fillColor': 'red', 'color': 'black', 'weight': 1, 'fillOpacity': 0.3
+    }).add_to(m)
+
+# ✅ عرض النقاط
 for _, row in df_points_filtered.iterrows():
-    lat, lon = row["latitude"], row["longitude"]
-    description = row.get("description", "No description")
-    feeder_id = row.get("feeder-id", "N/A")
-    zone = row.get("zone", "N/A")
-
-    popup_html = f"""
-    <b>📍 الوصف:</b> {description} <br>
-    <b>📡 Feeder ID:</b> {feeder_id} <br>
-    <b>🔄 Zone:</b> {zone} <br>
-    """
-
     folium.Marker(
-        location=[lat, lon],
-        popup=folium.Popup(popup_html, max_width=300),
+        location=[row["latitude"], row["longitude"]],
+        popup=f"📍 {row.get('description', 'No description')} - Feeder ID: {row.get('feeder-id', 'N/A')}",
         icon=folium.Icon(color="blue", icon="info-sign")
     ).add_to(m)
 
