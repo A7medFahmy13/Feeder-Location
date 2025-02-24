@@ -125,6 +125,13 @@ if selected_zones:
     else:
         st.warning("⚠️ لم يتم العثور على العمود 'feeder-id' في بيانات النقاط.")
 
+    # ✅ عرض بيانات المناطق والنقاط
+    with st.expander(f"📊 بيانات المناطق ({len(df_zones_filtered)})", expanded=True):
+        st.dataframe(df_zones_filtered.drop(columns=["geometry"], errors="ignore"))
+
+    with st.expander(f"📍 بيانات النقاط ({len(df_points_filtered)})", expanded=True):
+        st.dataframe(df_points_filtered.drop(columns=["geometry"], errors="ignore"))
+
 # ✅ إعداد وعرض الخريطة
 st.subheader("🌍 الخريطة التفاعلية")
 m = folium.Map(location=[18.2, 42.5], zoom_start=8)
