@@ -47,8 +47,9 @@ def authenticate(username, password):
     return USERS.get(username) == password
 
 # ✅ تصميم صفحة تسجيل الدخول الاحترافية
-def login_page():
+
     st.set_page_config(page_title="🚀 تسجيل الدخول", page_icon="🔐", layout="centered")
+def login_page():
 
     # ✅ إضافة صورة شعار أو خلفية
     st.markdown(
