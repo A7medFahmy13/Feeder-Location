@@ -215,12 +215,4 @@ if st.session_state.get("authenticated"):
         st.warning("تم تسجيل الخروج تلقائياً بسبب عدم النشاط")
         st.session_state.clear()
         st.rerun()
-<<<<<<< HEAD
-<<<<<<< HEAD
     st.session_state.last_activity = time.time()
-=======
-    st.session_state.last_activity = time.time()
->>>>>>> 72c46f3 (حل التعارضات ودمج التعديلات)
-=======
-    st.session_state.last_activity = time.time()
->>>>>>> 72eb174 (حل التعارضات ودمج التعديلات)
