@@ -10,7 +10,8 @@ from streamlit_folium import folium_static
 from shapely.wkt import loads as wkt_loads
 from shapely.geometry import Point
 from rtree import index
-from folium.plugins import MarkerCluster, HeatMap, MeasureControl
+from folium.plugins import MarkerCluster, HeatMap, MeasureControl, LocateControl 
+from folium.plugins import Fullscreen
 import time
 
 # ✅ تحميل بيانات المستخدمين
@@ -158,56 +159,81 @@ if selected_zones:
     with st.expander(f"📍 بيانات النقاط ({len(df_points_filtered)})", expanded=True):
         st.dataframe(df_points_filtered.drop(columns=["geometry"], errors="ignore"))
 
+
+# ✅ تحديد موقع المستخدم تلقائيًا عند بدء التشغيل
+if "user_lat" not in st.session_state or "user_lon" not in st.session_state:
+    try:
+        response = requests.get("https://ipinfo.io/json")
+        location_data = response.json()
+        lat, lon = map(float, location_data["loc"].split(","))
+        st.session_state["user_lat"], st.session_state["user_lon"] = lat, lon
+    except:
+        st.session_state["user_lat"], st.session_state["user_lon"] = None, None  # لا يوجد موقع افتراضي
 # ✅ إعداد وعرض الخريطة
 st.subheader("🌍 الخريطة التفاعلية")
-m = folium.Map(location=[18.2, 42.5], zoom_start=8)
+m = folium.Map(zoom_start=10, control_scale=True)
 
-# إضافة تجميع النقاط
-marker_cluster = MarkerCluster(
-    name="تجميع النقاط",
-    overlay=True,
-    control=True,
-    icon_create_function=None
-).add_to(m)
+# ✅ إضافة زر "تحديد موقعي الحالي" داخل الخريطة
+LocateControl(auto_start=True).add_to(m)
 
-# إضافة خريطة الحرارة
-heat_layer = HeatMap(
-    name="خريطة الحرارة",
-    data=[[row.latitude, row.longitude] for row in df_points_filtered.itertuples()],
-    radius=15,
-    overlay=True,
-    control=True
-).add_to(m)
+# ✅ إضافة زر "ملء الشاشة" داخل الخريطة
+Fullscreen(position="topright").add_to(m)
 
-# إضافة تحكم بالطبقات
-folium.LayerControl(
-    position='topright',
-    collapsed=False,
-    autoZIndex=True
-).add_to(m)
+# ✅ إضافة نقطة المستخدم على الخريطة إذا تم تحديد الموقع
+if st.session_state["user_lat"] is not None and st.session_state["user_lon"] is not None:
+    folium.Marker(
+        location=[st.session_state["user_lat"], st.session_state["user_lon"]],
+        popup="📍 موقعك الحالي",
+        icon=folium.Icon(color="red", icon="user")
+    ).add_to(m)
 
-# إضافة مقياس المسافة
-MeasureControl(
-    position='bottomleft',
-    primary_length_unit='meters',
-    secondary_length_unit='kilometers'
-).add_to(m)
+# ✅ إضافة مقياس المسافة
+MeasureControl(position='bottomleft', primary_length_unit='meters', secondary_length_unit='kilometers').add_to(m)
 
-# عرض المناطق
+# ✅ عرض المناطق المختارة على الخريطة بلون واضح
 if not df_zones_filtered.empty:
     for _, row in df_zones_filtered.iterrows():
-        folium.GeoJson(row["geometry"].__geo_interface__).add_to(m)
+        folium.GeoJson(
+            row["geometry"].__geo_interface__,
+            style_function=lambda feature: {
+                "fillColor": "green",
+                "color": "black",
+                "weight": 2,
+                "fillOpacity": 0.3
+            }
+        ).add_to(m)
 
-# عرض النقاط
-for _, row in df_points_filtered.iterrows():
-    folium.Marker(
-        location=[row["latitude"], row["longitude"]],
-        popup=f"📍 {row.get('description', 'No description')}",
-        icon=folium.Icon(color="blue", icon="info-sign")
-    ).add_to(marker_cluster)
+# ✅ إضافة النقاط على الخريطة مع التوجيه لخرائط Google
+bounds = []
 
+if not df_points_filtered.empty:
+    marker_cluster = MarkerCluster(name="نقاط البيانات").add_to(m)
+
+    for _, row in df_points_filtered.iterrows():
+        google_maps_url = f"https://www.google.com/maps/dir/?api=1&destination={row['latitude']},{row['longitude']}"
+
+        popup_text = f"""
+        <b>📌 الوصف:</b> {row.get('description', 'No description')}<br>
+        <b>📍 الإحداثيات:</b> ({row["latitude"]}, {row["longitude"]})<br>
+        <a href="{google_maps_url}" target="_blank">🗺️ اضغط هنا للذهاب إلى خرائط Google</a>
+        """
+        
+        folium.Marker(
+            location=[row["latitude"], row["longitude"]],
+            popup=folium.Popup(popup_text, max_width=300),
+            icon=folium.Icon(color="blue", icon="info-sign")
+        ).add_to(marker_cluster)
+        
+        bounds.append([row["latitude"], row["longitude"]])  # إضافة النقطة لضبط التكبير
+
+        
+
+# ✅ ضبط تكبير الخريطة لتوضيح النقاط والمناطق المختارة
+if bounds:
+    m.fit_bounds(bounds)
+
+# ✅ عرض الخريطة
 folium_static(m)
-
 # نظام تسجيل الخروج الذكي
 if st.session_state.get("authenticated"):
     last_activity = st.session_state.get("last_activity", time.time())
