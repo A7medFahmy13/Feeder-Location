@@ -15,6 +15,7 @@ from folium.plugins import Fullscreen
 import time
 from PIL import Image
 import bcrypt
+st.set_page_config(page_title="🚀 تسجيل الدخول", page_icon="🔐", layout="centered")  # ✅ يجب أن يكون أول سطر
 # ✅ تحميل بيانات المستخدمين
 @st.cache_resource
 def load_users():
