@@ -64,8 +64,8 @@ if not st.session_state["authenticated"]:
     st.stop()
 else:
     st.sidebar.button("🔓 تسجيل الخروج", on_click=lambda: st.session_state.update({"authenticated": False}))
-    st.title("🌍 Aseer Monitoring Map")
-    st.write(f"مرحبًا، {st.session_state['user']} 👋")
+    st.title("🌍 ASEER FEEDER MAP ")
+    st.write(f" Welcome our strategic partner >> ، {st.session_state['user']} 👋")
 
 # ✅ تحميل بيانات المناطق
 @st.cache_resource
@@ -143,6 +143,14 @@ if selected_zones:
                     valid_points.append(idx)
                     break
         df_points_filtered = df_points.loc[valid_points]
+
+    # ✅ إضافة فلتر feeder_id
+    if "feeder_id" in df_points_filtered.columns:
+        feeder_ids = df_points_filtered["feeder_id"].unique()
+        selected_feeder_ids = st.multiselect("اختر Feeder ID", feeder_ids)
+        
+        if selected_feeder_ids:
+            df_points_filtered = df_points_filtered[df_points_filtered["feeder_id"].isin(selected_feeder_ids)]
 
     with st.expander(f"📊 بيانات المناطق ({len(df_zones_filtered)})", expanded=True):
         st.dataframe(df_zones_filtered.drop(columns=["geometry"], errors="ignore"))
