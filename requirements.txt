@@ -19,3 +19,5 @@ plotly
 pydeck
 streamlit_folium
 openpyxl
+rtree
+
